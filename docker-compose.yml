@@ -1,0 +1,7 @@
+ember:
+  image: geoffreyd/ember-cli
+  volumes:
+   - .:/usr/src/app
+  ports:
+   - "4200"
+   - "35729"
