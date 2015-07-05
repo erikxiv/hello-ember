@@ -1,7 +1,4 @@
-ember:
-  image: geoffreyd/ember-cli
-  volumes:
-   - .:/usr/src/app
+node:
+  image: library/nginx
   ports:
-   - "4200"
-   - "35729"
+   - "80:80"

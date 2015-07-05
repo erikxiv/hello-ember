@@ -1,6 +1,6 @@
 {
   "name": "hello-ember",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "description": "Small description for hello-ember goes here",
   "private": true,
   "directories": {
@@ -34,6 +34,10 @@
     "ember-disable-proxy-controllers": "^1.0.0",
     "ember-export-application-global": "^1.0.2",
     "gulp": "^3.9.0",
-    "gulp-shell": "^0.4.2"
+    "gulp-docker-dest": "^0.2.0",
+    "gulp-watch": "^4.2.4"
+  },
+  "dependencies": {
+    "express": "^4.13.0"
   }
 }
