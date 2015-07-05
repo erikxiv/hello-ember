@@ -1,6 +1,10 @@
-See http://blog.erikxiv.com/home-project-workflow/
-...
+See http://blog.erikxiv.com/home-project-workflow/ and http://blog.erikxiv.com/workflow-to-the-test/
+
 # Time to start cracking
+
+### Overview
+
+I'm for this exercise aiming for an [Ember](emberjs.com) app with [Node](nodejs.org) as a web backend. Simplicity will be paramount when it comes to functionality so as to focus on scripting the workflow. Be aware of that this post is more of a log of the activities, and therefore slightly lengthy and full of mistakes and dead ends.
 
 ##### Install
 ```
@@ -136,7 +140,7 @@ git remote -v
 git push origin master
 ```
 
-### Deploy to UAT with Travis
+### Deploy to staging with Travis
 
 OK, next step. I've been promised a fully-automated deploy to a production-like testing environment. Chosen tooling is [Heroku](heroku.com) and [Travis](travis-ci.org), the first due to familiarity, the second due to hip-factor, both due to being free and cloud-based for this particular project.
 
@@ -144,4 +148,41 @@ OK, next step. I've been promised a fully-automated deploy to a production-like 
 * Sign-up with GitHub...check
 * Enable the helloember-project...check
 * `.travis.yml`...hmm, google? Wait a minute. I already have a travis-file in my directory, likely created when generating the ember skeleton. Oh, well...check
-* Push to GitHub
+* Push to GitHub (changed README)...check
+* Travis build running...check
+* Waiting...green light! For what, one may wonder - it seems there are some jshint checks being run. As I haven't changed the ember code, I'm not that surprised that it still checks out.
+
+##### Get Travis deploying
+* According to the manual, this should be a breeze. Good to know.
+* I need to install travis cli to encrypt my heroku key. Another unfriendly requirement, although hopefully a one-time-thing. I suddenly need ruby installed (or rather, verified that it is still working)
+* Trusting that travis will not secretly steal my key: `travis encrypt $(heroku auth:token) --add deploy.api_key`...done. My travis.yml now has an api-key in it. Adding heroku as the provider.
+* The documentation seems to suggest that there is no "deploy-to-production" button, but rather that one can use different branches (e.g. deploy-to-production = branch). Assuming that it will work that way already, and naming the master branch as staging.
+* Fingers crossed, pushing changes to GitHub...Fail. `No stash found`, `"App not found." (wrong app "helloember-staging"?)`. Might be I have to create the app on Heroku first? Surprisingly no clear result from Google on this.
+* App created manually on heroku (with just name, nothing else), building again...hmm, retry did not seem to work, commiting small change instead...starting to realize that cloud-based CI requires some patience while debugging issues...Deployed successfully!
+* Browsing to [helloember-staging.herokuapp.com](helloember-staging.herokuapp.com)...Application Error.
+* `heroku logs --app helloember-staging`...`sh: 1: ember: not found`. Ah, seems as if heroku is instructed by my package.json to start the application with ember (which one should only do in a development environment).
+
+Let's take a bit of a timeout, instead of just following the various guides. My app is basically an ember skeleton, which in development mode compacts into html and javascript in the dist folder. Checking the travis-file, there are no instructions on how to package the app for deployment, and there are no instructions for heroku (apart from `ember server`) on how to run it. Somewhere along the line, I probably should be the one to decide which web server heroku should use, and which files should be served. For the development workflow I used a Docker container with nginx to serve the dist-folder. It seems a viable simple strategy, except for nginx/Docker. Let's switch these for a simple [expressjs](expressjs.com) app instead.
+
+* Added `before_deploy: npm build` to travis.yml (e.g. `ember build` as specified in package.json)
+* Changed start-command in package.json to `node app.js` (ready-made in one of the attempts above).
+* Commit again...Improvement. The app is now running, but giving 404:s, it looks like the ember build step wasn't executed properly.
+* Commiting explicit `ember build` && a `ls dist`...build works as expected, but still 404
+* Changing sendfile to sendFile, app.get(*) to app.get(/) and adding logs...another type of error. Sigh.
+* `heroku run bash --app helloember-staging` followed by `ls`. Hmm, no dist folder at all.
+* Adding `skip_cleanup: true` to the deploy section did the trick. Extra points for fixing it via my iPhone on the subway (edit online on GitHub, commit).
+
+### Deploy to production
+
+If all is well, all I now need to do is create a new app on Heroku (check) branch to a new production branch on GitHub. Testing...works!
+
+### Verifying the workflow
+
+1. Inspiration hits. Run to computer. **Check**
+1. Open a terminal window, type `cd project && subl . && gulp up` to start the project environment. **Check**
+1. Make changes to a text file or two. Save. **Check**
+1. View results, e.g. open web browser to app UI or unit-test report. **Check**
+1. Type `Ctrl-C` in the terminal window to bring the environment down. **Check**
+1. Commit to Github. **Check**
+1. Verify that staging environment is updated. **Check**
+1. Branch and verify that production environment is updated. **Check**
