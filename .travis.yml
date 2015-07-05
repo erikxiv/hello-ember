@@ -17,6 +17,7 @@ script:
 - npm test
 before_deploy:
 - ember build
+- ls dist
 deploy:
   provider: heroku
   api_key:
